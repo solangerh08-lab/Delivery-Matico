@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#c62828"><title>Delivery Matico</title>
+<style>
+:root{--red:#c62828;--yellow:#ffd33d;--cream:#fffaf0;--ink:#242424;--muted:#6b7280}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);font-family:Arial,sans-serif;color:var(--ink)}
+header{background:var(--red);color:white;text-align:center;padding:22px 15px 24px;border-bottom:7px solid var(--yellow)}
+.logo{font-size:29px;font-weight:900;letter-spacing:.5px}.tag{margin:7px 0 0;font-size:14px}
+main{max-width:850px;margin:16px auto;padding:0 13px 40px}
+nav{display:flex;gap:7px;position:sticky;top:0;background:var(--cream);padding:8px 0;z-index:2}
+nav button{flex:1;background:#eee;color:#333;border:0;border-radius:11px;padding:12px 5px;font-weight:bold}
+nav button.active{background:var(--yellow)}
+.panel{background:#fff;border-radius:16px;padding:16px;margin:10px 0;box-shadow:0 3px 13px #0000000c}
+h2{font-size:19px;margin:0 0 13px}h3{font-size:16px;margin:0 0 8px}
+label{display:block;font-size:13px;font-weight:bold;margin:11px 0 5px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:white}
+textarea{min-height:65px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{cursor:pointer}.primary{background:var(--red);color:white;border:0;border-radius:11px;padding:13px;font-weight:bold;width:100%;margin-top:12px}
+.secondary{background:#fff1bd;color:#352900;border:0;border-radius:10px;padding:10px;font-weight:bold}
+.small{font-size:12px;color:var(--muted);line-height:1.45}.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+.product{border:1px solid #eee;border-radius:13px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.product .emoji{font-size:27px}.product strong{font-size:14px}.product .price{color:var(--red);font-weight:800}
+.product button{background:var(--yellow);border:0;border-radius:9px;padding:9px;font-weight:bold}
+.cartline{display:grid;grid-template-columns:1fr auto auto;gap:9px;align-items:center;border-bottom:1px solid #eee;padding:9px 0}
+.qty{width:55px;padding:7px}.remove{border:0;background:#fee;color:#a00;border-radius:7px;padding:7px}
+.total{font-size:23px;font-weight:900;color:var(--red)}.hidden{display:none!important}
+.notice{background:#fff8dc;border-radius:10px;padding:10px;font-size:12px;color:#5d4a13}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
+@media(max-width:430px){.grid{grid-template-columns:1fr}nav button{font-size:12px}}
+</style></head>
+<body>
+<header><div class="logo">🛵 DELIVERY MATICO</div><p class="tag">¡Comprá, nosotros te lo llevamos!</p></header>
+<main>
+<nav><button class="active" data-tab="shop" onclick="tab('shop')">Catálogo</button><button data-tab="cart" onclick="tab('cart')">Mi carrito</button><button data-tab="order" onclick="tab('order')">Mis datos</button><button data-tab="admin" onclick="tab('admin')">Admin</button></nav>
+<section id="shop">
+<div class="panel"><h2>¿Qué deseas pedir?</h2><p class="small">Agrega productos al carrito o elige un encargo personalizado.</p><div id="catalog" class="products"></div>
+<div class="notice" style="margin-top:12px">El catálogo comienza vacío. Agrega tus productos y precios desde la sección Admin.</div>
+<button class="secondary" onclick="tab('order');document.getElementById('kind').value='encargo';toggleKind()">Hacer un mandado o encargo</button></div>
+</section>
+<section id="cart" class="hidden"><div class="panel"><h2>Mi carrito</h2><div id="cartItems"></div><div class="row" style="display:flex;justify-content:space-between;margin-top:15px"><b>Subtotal productos</b><b id="subtotal">S/ 0.00</b></div><button class="primary" onclick="tab('order')">Continuar con mis datos</button></div></section>
+<section id="order" class="hidden"><div class="panel"><h2>Datos de entrega</h2>
+<label>Tipo de pedido</label><select id="kind" onchange="toggleKind()"><option value="catalogo">Productos del catálogo</option><option value="encargo">Mandado o encargo personalizado</option></select>
+<div id="errandBox" class="hidden"><label>Describe tu encargo</label><textarea id="errand" placeholder="¿Qué necesitas y dónde debemos comprarlo?"></textarea></div>
+<div class="grid"><div><label>Nombre</label><input id="name" placeholder="Tu nombre"></div><div><label>Celular</label><input id="phone" placeholder="Tu número"></div></div>
+<label>Distrito</label><select id="district" onchange="estimate()"><option>Callería</option><option>Yarinacocha</option><option>Manantay</option></select>
+<label>Dirección exacta y referencia</label><textarea id="address" placeholder="Jr./Av., manzana, lote y referencia"></textarea>
+<label>Distancia estimada</label><select id="distance" onchange="estimate()"><option value="near">Zona cercana</option><option value="far">Zona alejada</option><option value="extra">Muy alejada (cotizar)</option></select>
+<div class="notice"><div style="display:flex;justify-content:space-between;align-items:center"><b>Delivery estimado</b><span class="total" id="fee">S/ 10</span></div><span id="feeNote">Tarifa referencial, se confirma según dirección.</span></div>
+<label>Indicaciones adicionales</label><textarea id="extra" placeholder="Referencia, horario, forma de pago..."></textarea>
+<div style="display:flex;justify-content:space-between;margin-top:15px"><b>Total estimado</b><span class="total" id="grandTotal">S/ 10.00</span></div>
+<button class="primary" onclick="sendOrder()">Enviar pedido por WhatsApp</button>
+<p class="small">El precio de productos o compras por encargo se confirma por separado. El delivery es estimado hasta verificar la dirección.</p></div></section>
+<section id="admin" class="hidden">
+<div class="panel"><h2>Administrar catálogo</h2><p class="small">Agrega los productos y sus precios reales. Se guardan en este dispositivo.</p>
+<div class="grid"><div><label>Nombre del producto</label><input id="pname" placeholder="Ej. Gaseosa 1 L"></div><div><label>Precio (S/)</label><input id="pprice" type="number" min="0" step=".10" placeholder="0.00"></div></div>
+<div class="grid"><div><label>Categoría</label><select id="pcat"><option>Bebidas</option><option>Alimentos</option><option>Panadería</option><option>Postres</option><option>Otros</option></select></div><div><label>Emoji (opcional)</label><input id="pemoji" placeholder="🥤"></div></div>
+<button class="primary" onclick="addProduct()">Agregar al catálogo</button><div id="adminProducts" style="margin-top:12px"></div></div>
+<div class="panel"><h2>Tarifas de delivery</h2><div class="grid">
+<div><label>Callería cercana</label><input type="number" id="cNear" value="10" min="0" oninput="saveRates()"></div><div><label>Callería alejada</label><input type="number" id="cFar" value="15" min="0" oninput="saveRates()"></div>
+<div><label>Yarinacocha cercana</label><input type="number" id="yNear" value="8" min="0" oninput="saveRates()"></div><div><label>Yarinacocha alejada</label><input type="number" id="yFar" value="10" min="0" oninput="saveRates()"></div>
+<div><label>Manantay cercana</label><input type="number" id="mNear" value="15" min="0" oninput="saveRates()"></div><div><label>Manantay alejada</label><input type="number" id="mFar" value="20" min="0" oninput="saveRates()"></div></div>
+<p class="small">Para zonas muy alejadas, la tarifa se cotiza manualmente. Callería puede superar S/15 y Yarinacocha S/10 según la distancia.</p>
+</div>
+<div class="panel"><h2>Datos del negocio</h2><p><b>Base de salida:</b> Jr. Iparia, Mz. 52, Lt. 9A, Pucallpa.</p><p><b>WhatsApp:</b> 975 779 972 / 921 625 528</p><p class="small">Este es un prototipo local. Aún no tiene GPS/mapas, cuentas de usuarios, pagos ni base de datos en línea.</p></div>
+</section>
+</main><footer>Delivery Matico · Pucallpa, Ucayali</footer>
+<script>
+const defaults={cNear:10,cFar:15,yNear:8,yFar:10,mNear:15,mFar:20};let products=JSON.parse(localStorage.getItem('dmProducts')||'[]'),cart=JSON.parse(localStorage.getItem('dmCart')||'{}');
+function tab(id){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='cart')renderCart();if(id==='admin')renderAdmin()}
+function money(n){return 'S/ '+Number(n||0).toFixed(2)}
+function renderShop(){let el=document.getElementById('catalog');el.innerHTML=products.length?'':'<p class="small">Todavía no hay productos publicados.</p>';products.forEach((p,i)=>{el.innerHTML+=`<article class="product"><span class="emoji">${esc(p.emoji||'🛍️')}</span><strong>${esc(p.name)}</strong><span class="small">${esc(p.cat)}</span><span class="price">${money(p.price)}</span><button onclick="addCart(${i})">Agregar +</button></article>`})}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function addProduct(){let name=document.getElementById('pname').value.trim(),price=Number(document.getElementById('pprice').value);if(!name||!Number.isFinite(price)||price<=0){alert('Escribe el nombre y un precio válido.');return}products.push({name,price,cat:document.getElementById('pcat').value,emoji:document.getElementById('pemoji').value.trim()});localStorage.setItem('dmProducts',JSON.stringify(products));document.getElementById('pname').value='';document.getElementById('pprice').value='';document.getElementById('pemoji').value='';renderAdmin();renderShop()}
+function deleteProduct(i){products.splice(i,1);localStorage.setItem('dmProducts',JSON.stringify(products));renderAdmin();renderShop()}
+function addCart(i){let key=String(i);cart[key]=(cart[key]||0)+1;saveCart();alert('Producto agregado al carrito.')}
+function saveCart(){localStorage.setItem('dmCart',JSON.stringify(cart));renderCart()}
+function renderCart(){let el=document.getElementById('cartItems'),sum=0;el.innerHTML='';Object.keys(cart).forEach(k=>{let i=Number(k),p=products[i],q=cart[k];if(!p){delete cart[k];return}sum+=p.price*q;el.innerHTML+=`<div class="cartline"><span>${esc(p.name)}<br><b>${money(p.price*q)}</b></span><input class="qty" type="number" min="1" value="${q}" onchange="setQty(${i},this.value)"><button class="remove" onclick="removeCart(${i})">Quitar</button></div>`});if(!el.innerHTML)el.innerHTML='<p class="small">Tu carrito está vacío. Agrega productos desde el catálogo.</p>';document.getElementById('subtotal').textContent=money(sum);document.getElementById('grandTotal').textContent=money(sum+feeValue());}
+function setQty(i,v){let q=Math.max(1,parseInt(v)||1);cart[i]=q;saveCart()}function removeCart(i){delete cart[i];saveCart()}
+function toggleKind(){let e=document.getElementById('kind').value==='encargo';document.getElementById('errandBox').classList.toggle('hidden',!e)}
+function rates(){let r={};Object.keys(defaults).forEach(k=>r[k]=Number(document.getElementById(k).value||defaults[k]));return r}
+function saveRates(){localStorage.setItem('dmRates',JSON.stringify(rates()));estimate()}
+function feeValue(){let z=document.getElementById('distance').value;if(z==='extra')return 0;let d=document.getElementById('district').value,k=d==='Callería'?'c':d==='Yarinacocha'?'y':'m';return rates()[k+(z==='near'?'Near':'Far')]}
+function estimate(){let z=document.getElementById('distance').value,f=z==='extra'?'Por confirmar':money(feeValue());document.getElementById('fee').textContent=f;document.getElementById('feeNote').textContent=z==='extra'?'Se cotizará manualmente según la ubicación.':'Estimación según zona; se confirma al revisar la dirección.';let sub=Object.keys(cart).reduce((s,k)=>s+(products[Number(k)]?products[Number(k)].price*cart[k]:0),0);document.getElementById('grandTotal').textContent=z==='extra'?'Productos + delivery por confirmar':money(sub+feeValue())}
+function renderAdmin(){let el=document.getElementById('adminProducts');el.innerHTML=products.map((p,i)=>`<div class="cartline"><span>${esc(p.name)} · ${money(p.price)}</span><button class="remove" onclick="deleteProduct(${i})">Eliminar</button></div>`).join('')||'<p class="small">No hay productos agregados.</p>'}
+function sendOrder(){let kind=document.getElementById('kind').value,name=document.getElementById('name').value.trim(),phone=document.getElementById('phone').value.trim(),address=document.getElementById('address').value.trim(),detail=kind==='encargo'?document.getElementById('errand').value.trim():Object.keys(cart).map(k=>{let p=products[Number(k)];return p?`${p.name} x${cart[k]} = ${money(p.price*cart[k])}`:''}).filter(Boolean).join('\n');if(!name||!address||!detail){alert('Completa tu nombre, dirección y agrega productos o describe tu encargo.');return}let sub=Object.keys(cart).reduce((s,k)=>s+(products[Number(k)]?products[Number(k)].price*cart[k]:0),0),z=document.getElementById('distance').value,fee=z==='extra'?'Por cotizar':money(feeValue()),msg=`Hola, Delivery Matico. Quiero hacer un pedido.\nTipo: ${kind==='encargo'?'Encargo':'Catálogo'}\nDetalle: ${detail}\nNombre: ${name}\nCelular: ${phone}\nDistrito: ${document.getElementById('district').value}\nDirección: ${address}\nDelivery: ${fee}\nSubtotal productos: ${money(sub)}\nIndicaciones: ${document.getElementById('extra').value}`;window.open('https://wa.me/51975779972?text='+encodeURIComponent(msg),'_blank')}
+try{let r=JSON.parse(localStorage.getItem('dmRates')||'null');if(r)Object.keys(defaults).forEach(k=>document.getElementById(k).value=r[k])}catch(e){}renderShop();renderAdmin();estimate();
+</script></body></html>
